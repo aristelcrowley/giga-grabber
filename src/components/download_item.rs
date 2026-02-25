@@ -1,11 +1,12 @@
 use crate::Download;
 use crate::app::MONOSPACE;
-use crate::helpers::{icon_button, pad_f32};
+use crate::helpers::{format_size, icon_button, pad_f32};
 use crate::resources::{PAUSE_ICON, PLAY_ICON, X_ICON};
 use crate::styles;
 use iced::alignment::Vertical;
 use iced::widget::{Row, container, progress_bar, space, text};
 use iced::{Alignment, Element, Length};
+use std::sync::atomic::Ordering;
 
 #[derive(Debug, Clone)]
 pub(crate) enum Message {
@@ -56,6 +57,19 @@ pub(crate) fn download_item(download: &'_ Download, index: usize) -> Element<'_,
                     .girth(Length::Fixed(15_f32)),
             )
             .push(space::horizontal().width(Length::Fixed(10_f32)))
+            .push(
+                text({
+                    let downloaded = download.downloaded.load(Ordering::Relaxed) as u64;
+                    let total = download.node.size;
+                    format!("{}/{}", format_size(downloaded), format_size(total)).replace('0', "O")
+                })
+                .width(Length::Shrink)
+                .height(Length::Fill)
+                .align_y(Vertical::Center)
+                .font(MONOSPACE)
+                .size(13),
+            )
+            .push(space::horizontal().width(Length::Fixed(6_f32)))
             .push(
                 text(format!("{} MB/s", pad_f32(download.speed())).replace('0', "O"))
                     .width(Length::Shrink)

@@ -206,20 +206,33 @@ impl MegaClient {
 
     /// Call the MEGA `g` (download) command and return the URL
     async fn get_download_url(&self, node: &Node) -> Result<(String, u64)> {
+        let is_standalone_file = node.parent.is_none();
+
         let url = {
             let mut url = self.origin.join("cs")?;
             let mut qp = url.query_pairs_mut();
             qp.append_pair("id", self.next_request_id().to_string().as_str());
-            qp.append_pair("n", &node.root_handle);
+            if !is_standalone_file {
+                qp.append_pair("n", &node.root_handle);
+            }
             drop(qp);
             url
         };
 
-        let request = ApiRequest::Download {
-            g: 1,
-            ssl: 2,
-            p: None,
-            n: Some(node.handle.clone()),
+        let request = if is_standalone_file {
+            ApiRequest::Download {
+                g: 1,
+                ssl: 2,
+                p: Some(node.handle.clone()),
+                n: None,
+            }
+        } else {
+            ApiRequest::Download {
+                g: 1,
+                ssl: 2,
+                p: None,
+                n: Some(node.handle.clone()),
+            }
         };
 
         let body = vec![request];

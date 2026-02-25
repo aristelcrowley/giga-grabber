@@ -1,4 +1,5 @@
 use crate::config::Config;
+use crate::helpers::format_size;
 use crate::helpers::mega_builder;
 use crate::mega_client::NodeKind;
 use crate::{Download, RunnerMessage, get_files, spawn_workers};
@@ -234,7 +235,11 @@ pub(crate) async fn run_cli(args: CliArgs) -> Result<()> {
     while let Some(msg) = message_receiver.recv().await {
         match msg {
             RunnerMessage::Active(download) => {
-                pb.println(format!("→ {}", download.node.name));
+                pb.println(format!(
+                    "→ {} ({})",
+                    download.node.name,
+                    format_size(download.node.size)
+                ));
             }
             RunnerMessage::Inactive(_handle) => {
                 finished_files += 1;
